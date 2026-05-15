@@ -1,18 +1,32 @@
-name: Test Workflow
+name: Test and upload coverage
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  - push
+  - pull_request
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
-    steps:
-      # ...other steps
 
-      - name: Upload coverage reports to Codecov
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests with coverage
+        run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.txt
+          fail_ci_if_error: true
+          verbose: true
